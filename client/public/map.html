@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BusNear — Live Bus Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #0f0f1a; }
+    #status-bar { background: #1a1a2e; padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot.live { background: #4ade80; box-shadow: 0 0 6px #4ade80; animation: pulse 1.5s infinite; }
+    .dot.off { background: #666; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    #status-text { color: white; font-size: 14px; font-weight: 600; }
+    #time-text { color: #a0aec0; font-size: 11px; margin-left: auto; }
+    #map { width: 100%; height: calc(100vh - 44px); }
+  </style>
+</head>
+<body>
+  <div id="status-bar">
+    <span id="dot" class="dot off"></span>
+    <span id="status-text">⚫ Waiting for bus...</span>
+    <span id="time-text"></span>
+  </div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyAvjjZZ8Px1iPa8Kg46LZbYtVNF7U8nAHA",
+      authDomain: "gps-busnear.firebaseapp.com",
+      databaseURL: "https://gps-busnear-default-rtdb.firebaseio.com",
+      projectId: "gps-busnear"
+    });
+
+    const map = L.map('map').setView([11.0168, 76.9558], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const busIcon = L.divIcon({
+      className: '',
+      html: '<div style="background:#e94560;border:3px solid white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 12px rgba(233,69,96,0.8);">🚌</div>',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+
+    let marker = null;
+
+    firebase.database().ref('bus1').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.lat && data.lng) {
+        const latlng = [data.lat, data.lng];
+
+        if (!marker) {
+          marker = L.marker(latlng, { icon: busIcon }).addTo(map);
+        } else {
+          marker.setLatLng(latlng);
+        }
+
+        map.setView(latlng, 15);
+
+        document.getElementById('dot').className = 'dot live';
+        document.getElementById('status-text').textContent = '🟢 Bus is Live';
+        if (data.time) {
+          document.getElementById('time-text').textContent = 'Updated: ' + new Date(data.time).toLocaleTimeString();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

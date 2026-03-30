@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BusNear — Driver GPS Sender</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #0f0f1a; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 32px; max-width: 400px; width: 100%; text-align: center; }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    .sub { color: #a0aec0; font-size: 13px; margin-bottom: 24px; }
+    .status { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 20px; }
+    .status.live { background: rgba(16,185,129,0.2); color: #10b981; }
+    .status.off { background: rgba(160,174,192,0.2); color: #a0aec0; }
+    .coords { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; margin-bottom: 20px; font-family: monospace; font-size: 13px; color: #e94560; }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
+    .btn-start { background: #10b981; color: white; }
+    .btn-stop { background: #e94560; color: white; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn:active { transform: scale(0.97); }
+    .error { background: rgba(233,69,96,0.15); border: 1px solid rgba(233,69,96,0.3); color: #e94560; padding: 10px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🚌 BusNear Driver</h1>
+    <p class="sub">Share your live GPS location with passengers</p>
+
+    <div id="statusBadge" class="status off">⏸ Not sharing</div>
+
+    <div id="coordsBox" class="coords" style="display:none;">
+      <div>Lat: <span id="lat">—</span></div>
+      <div>Lng: <span id="lng">—</span></div>
+    </div>
+
+    <div id="errorBox" class="error" style="display:none;"></div>
+
+    <button id="startBtn" class="btn btn-start" onclick="startSharing()">▶ Start Sharing</button>
+    <button id="stopBtn" class="btn btn-stop" onclick="stopSharing()" disabled>⏹ Stop Sharing</button>
+  </div>
+
+  <!-- Firebase v8 CDN (standalone compat) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyAvjjZZ8Px1iPa8Kg46LZbYtVNF7U8nAHA",
+      authDomain: "gps-busnear.firebaseapp.com",
+      databaseURL: "https://gps-busnear-default-rtdb.firebaseio.com",
+      projectId: "gps-busnear"
+    });
+
+    const db = firebase.database();
+    let watchId = null;
+    let intervalId = null;
+    let currentPos = null;
+
+    function startSharing() {
+      if (!navigator.geolocation) {
+        showError('Geolocation not supported');
+        return;
+      }
+
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          currentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          document.getElementById('lat').textContent = currentPos.lat.toFixed(6);
+          document.getElementById('lng').textContent = currentPos.lng.toFixed(6);
+          document.getElementById('coordsBox').style.display = 'block';
+          document.getElementById('errorBox').style.display = 'none';
+        },
+        (err) => showError(err.message),
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
+
+      intervalId = setInterval(() => {
+        if (currentPos) {
+          db.ref('bus1').set({
+            lat: currentPos.lat,
+            lng: currentPos.lng,
+            time: Date.now()
+          });
+        }
+      }, 2000);
+
+      document.getElementById('statusBadge').className = 'status live';
+      document.getElementById('statusBadge').textContent = '🟢 Sharing Live';
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = false;
+    }
+
+    function stopSharing() {
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+      if (intervalId) clearInterval(intervalId);
+      watchId = null;
+      intervalId = null;
+      currentPos = null;
+
+      document.getElementById('statusBadge').className = 'status off';
+      document.getElementById('statusBadge').textContent = '⏸ Not sharing';
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+      document.getElementById('coordsBox').style.display = 'none';
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorBox');
+      el.textContent = '⚠️ ' + msg;
+      el.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

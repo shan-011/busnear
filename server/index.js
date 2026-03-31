@@ -9,7 +9,7 @@ import { errorHandler } from './middleware/errorHandler.js'
 import { initSocket } from './socket.js'
 import { loadCSV } from './controllers/busController.js'
 import authRoutes from './routes/authRoutes.js'
-import smsRoutes  from './routes/smsRoutes.js'
+import smsRoutes from './routes/smsRoutes.js'
 import whatsappRoutes from './routes/whatsappRoutes.js'
 
 dotenv.config()
@@ -26,7 +26,7 @@ const io = new Server(httpServer, {
 global.io = io
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL }))
+app.use(cors())
 // Note: order matters for webhooks
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
@@ -35,7 +35,7 @@ app.use(express.json())
 app.use('/api/routes', busRoutes)
 app.use('/api/sos', sosRoutes)
 app.use('/api/auth', authRoutes)
-app.use('/api/sms',  smsRoutes)
+app.use('/api/sms', smsRoutes)
 app.use('/api/whatsapp', whatsappRoutes)
 
 // Health check

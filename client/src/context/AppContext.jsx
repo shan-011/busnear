@@ -36,9 +36,13 @@ export const AppProvider = ({ children }) => {
       setConnected(false);
     });
 
+    socket.on('allBuses', (buses) => {
+      setLiveBuses(buses);
+    });
+
     socket.on('busUpdate', (data) => {
       setLiveBuses(prev => {
-        const idx = prev.findIndex(b => b.id === data.id);
+        const idx = prev.findIndex(b => b.routeId === data.routeId);
         if (idx >= 0) {
           const updated = [...prev];
           updated[idx] = data;

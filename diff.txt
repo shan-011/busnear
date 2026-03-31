@@ -1,0 +1,124 @@
+﻿diff --git a/server/index.js b/server/index.js
+index dd78512..af8fc90 100644
+--- a/server/index.js
++++ b/server/index.js
+@@ -9,7 +9,7 @@ import { errorHandler } from './middleware/errorHandler.js'
+ import { initSocket } from './socket.js'
+ import { loadCSV } from './controllers/busController.js'
+ import authRoutes from './routes/authRoutes.js'
+-import smsRoutes  from './routes/smsRoutes.js'
++import smsRoutes from './routes/smsRoutes.js'
+ import whatsappRoutes from './routes/whatsappRoutes.js'
+ 
+ dotenv.config()
+@@ -26,7 +26,7 @@ const io = new Server(httpServer, {
+ global.io = io
+ 
+ // Middleware
+-app.use(cors({ origin: process.env.CLIENT_URL }))
++app.use(cors())
+ // Note: order matters for webhooks
+ app.use(express.urlencoded({ extended: true }))
+ app.use(express.json())
+@@ -35,7 +35,7 @@ app.use(express.json())
+ app.use('/api/routes', busRoutes)
+ app.use('/api/sos', sosRoutes)
+ app.use('/api/auth', authRoutes)
+-app.use('/api/sms',  smsRoutes)
++app.use('/api/sms', smsRoutes)
+ app.use('/api/whatsapp', whatsappRoutes)
+ 
+ // Health check
+diff --git a/server/middleware/errorHandler.js b/server/middleware/errorHandler.js
+index e305225..9f7cea9 100644
+--- a/server/middleware/errorHandler.js
++++ b/server/middleware/errorHandler.js
+@@ -1,6 +1,6 @@
+ export const errorHandler = (err, req, res, next) => {
+-  console.error('Γ¥î Error:', err.message)
++  console.error(`Γ¥î [${new Date().toISOString()}] Error:`, err.stack || err.message)
+   res.status(err.status || 500).json({
+-    error: err.message || 'Internal server error'
++    error: err.message || 'An internal server error occurred'
+   })
+ }
+\ No newline at end of file
+diff --git a/server/socket.js b/server/socket.js
+index 519b33e..8ac53f4 100644
+--- a/server/socket.js
++++ b/server/socket.js
+@@ -1,21 +1,20 @@
+ import { routesCache } from './controllers/busController.js'
+ 
+ const cityCoords = {
+-  CHENNAI:     [13.0827, 80.2707],
+-  MADURAI:     [9.9252,  78.1198],
+-  COIMBATORE:  [11.0168, 76.9558],
+-  TRICHY:      [10.7905, 78.7047],
+-  SALEM:       [11.6643, 78.1460],
+-  TIRUNELVELI: [8.7139,  77.7567],
+-  NAGERCOIL:   [8.1833,  77.4119],
+-  KUMBAKONAM:  [10.9602, 79.3845],
+-  BANGALORE:   [12.9716, 77.5946],
+-  PUDUCHERRY:  [11.9416, 79.8083],
+-  TRICHY:      [10.7905, 78.7047],
+-  VELLORE:     [12.9165, 79.1325],
+-  ERODE:       [11.3410, 77.7172],
+-  DINDIGUL:    [10.3624, 77.9695],
+-  KANYAKUMARI: [8.0883,  77.5385],
++  CHENNAI: [13.0827, 80.2707],
++  MADURAI: [9.9252, 78.1198],
++  COIMBATORE: [11.0168, 76.9558],
++  TRICHY: [10.7905, 78.7047],
++  SALEM: [11.6643, 78.1460],
++  TIRUNELVELI: [8.7139, 77.7567],
++  NAGERCOIL: [8.1833, 77.4119],
++  KUMBAKONAM: [10.9602, 79.3845],
++  BANGALORE: [12.9716, 77.5946],
++  PUDUCHERRY: [11.9416, 79.8083],
++  VELLORE: [12.9165, 79.1325],
++  ERODE: [11.3410, 77.7172],
++  DINDIGUL: [10.3624, 77.9695],
++  KANYAKUMARI: [8.0883, 77.5385],
+ }
+ 
+ const interpolate = (from, to, t) => [
+@@ -39,18 +38,18 @@ export const initSocket = (io) => {
+ 
+   simulatedRoutes.forEach((route, i) => {
+     const fromCoords = findCoords(route.from)
+-    const toCoords   = findCoords(route.to)
++    const toCoords = findCoords(route.to)
+     let progress = Math.random()
+ 
+     liveBuses[route.route_no] = {
+-      busId   : `BUS-${i + 1}`,
+-      routeId : route.route_no,
+-      from    : route.from,
+-      to      : route.to,
+-      lat     : fromCoords[0],
+-      lng     : fromCoords[1],
+-      speed   : Math.floor(60 + Math.random() * 20),
+-      depot   : route.depot,
++      busId: `BUS-${i + 1}`,
++      routeId: route.route_no,
++      from: route.from,
++      to: route.to,
++      lat: fromCoords[0],
++      lng: fromCoords[1],
++      speed: Math.floor(60 + Math.random() * 20),
++      depot: route.depot,
+     }
+ 
+     setInterval(() => {
+@@ -58,8 +57,8 @@ export const initSocket = (io) => {
+       if (progress > 1) progress = 0
+ 
+       const [lat, lng] = interpolate(fromCoords, toCoords, progress)
+-      liveBuses[route.route_no].lat   = lat
+-      liveBuses[route.route_no].lng   = lng
++      liveBuses[route.route_no].lat = lat
++      liveBuses[route.route_no].lng = lng
+       liveBuses[route.route_no].speed = Math.floor(55 + Math.random() * 30)
+ 
+       io.emit('busUpdate', liveBuses[route.route_no])

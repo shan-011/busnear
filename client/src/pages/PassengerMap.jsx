@@ -35,7 +35,7 @@ function MapUpdater({ selectedRoute }) {
 export default function PassengerMap() {
   const [selectedRoute, setSelectedRoute] = useState(null)
   const [roadPath, setRoadPath] = useState([])
-  const { user } = useApp()
+  const { user, liveBuses } = useApp()
   const { busLocation, isLive, lastUpdated } = useFirebaseBus()
   const location = useLocation()
 
@@ -96,6 +96,22 @@ export default function PassengerMap() {
     }
   }
 
+  const createBusIcon = (busData, isLive = false) => L.divIcon({
+    html: `
+      <div class="flex flex-col items-center">
+        <div class="bg-[#0f0f1a]/95 backdrop-blur-md border border-brand/40 px-2 py-1 rounded shadow-2xl mb-1 whitespace-nowrap pointer-events-none">
+          <p class="text-[9px] font-black text-brand leading-none mb-0.5 tracking-tighter uppercase">#${busData.routeId || busData.routeNo || 'SETC'}</p>
+          <p class="text-[8px] font-bold text-white/90 leading-none truncate max-w-[70px]">${busData.driverName || 'Driver'}</p>
+        </div>
+        <div class="bus-marker-container">
+          <div class="bus-marker ${isLive ? 'bus-marker-bounce' : ''}">🚌</div>
+        </div>
+      </div>`,
+    className: 'custom-bus-marker',
+    iconSize: [80, 80],
+    iconAnchor: [40, 80]
+  });
+
   const fromCoord = selectedRoute ? getCoord(selectedRoute.from) : null;
   const toCoord = selectedRoute ? getCoord(selectedRoute.to) : null;
 
@@ -151,6 +167,20 @@ export default function PassengerMap() {
               isLive={isLive}
               lastUpdated={lastUpdated}
             />
+
+            {/* Simulated Live Buses from Context */}
+            {liveBuses.map(bus => (
+              <Marker
+                key={bus.routeId}
+                position={[bus.lat, bus.lng]}
+                icon={createBusIcon(bus, true)}
+              >
+                <Popup>
+                  <div className="text-xs font-bold text-brand">#{bus.routeId}</div>
+                  <div className="text-[10px] text-black font-bold uppercase">{bus.from} ➔ {bus.to}</div>
+                </Popup>
+              </Marker>
+            ))}
 
             {/* Selected route path and markers */}
             {selectedRoute && fromCoord && toCoord && roadPath.length > 0 && (

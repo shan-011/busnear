@@ -35,6 +35,10 @@ export const initSocket = (io) => {
 
   // Simulate 5 buses
   const simulatedRoutes = routesCache.slice(0, 5)
+  const dummyDrivers = [
+    'Ravi Kumar', 'S. Mani', 'K. Arul',
+    'P. Selvam', 'M. Ganesan'
+  ]
 
   simulatedRoutes.forEach((route, i) => {
     const fromCoords = findCoords(route.from)
@@ -44,6 +48,7 @@ export const initSocket = (io) => {
     liveBuses[route.route_no] = {
       busId: `BUS-${i + 1}`,
       routeId: route.route_no,
+      driverName: dummyDrivers[i],
       from: route.from,
       to: route.to,
       lat: fromCoords[0],

@@ -46,12 +46,9 @@ export const sendScheduleSMS = async (to, route) => {
 export const sendSOSAlert = async (passengerName, phone, lat, lng, routeNo) => {
   const mapsLink = `https://maps.google.com/?q=${lat},${lng}`
   const message =
-    `🚨 SOS ALERT - BusNear\n` +
-    `Passenger: ${passengerName}\n` +
-    `Phone: ${phone}\n` +
-    `Route: ${routeNo}\n` +
-    `Location: ${mapsLink}\n` +
-    `Time: ${new Date().toLocaleString('en-IN')}`
+    `🚨 SOS - BusNear\n` +
+    `${passengerName} | Route: ${routeNo}\n` +
+    `${mapsLink}`   // keep it short — under 3 segments (~480 chars)
 
   const officialNumbers = (process.env.SOS_OFFICIAL_NUMBERS || '')
     .split(',').map(n => n.trim()).filter(Boolean)

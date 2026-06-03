@@ -3,7 +3,7 @@
 ## 📌 Overview
 **BusNear** is a smart transportation system designed to improve public bus travel by providing real-time tracking, crowd monitoring, and easy web access. The system integrates GPS technology, a camera module, and web technologies to enhance passenger convenience and safety.
 
----
+-------
 
 ## 🚀 Features
 
